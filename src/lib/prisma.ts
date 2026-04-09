@@ -1,15 +1,12 @@
 import { PrismaClient } from "@/generated/prisma/client";
 
 function createPrismaClient() {
-  // Cloud (Turso) — ใช้เมื่อ deploy
-  if (process.env.TURSO_DATABASE_URL) {
-    const { createClient } = require("@libsql/client");
-    const { PrismaLibSQL } = require("@prisma/adapter-libsql");
-    const client = createClient({
-      url: process.env.TURSO_DATABASE_URL,
-      authToken: process.env.TURSO_AUTH_TOKEN,
-    });
-    const adapter = new PrismaLibSQL(client);
+  // Cloud (PostgreSQL) — ใช้เมื่อ deploy บน Railway
+  if (process.env.DATABASE_URL) {
+    const { Pool } = require("pg");
+    const { PrismaPg } = require("@prisma/adapter-pg");
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const adapter = new PrismaPg(pool);
     return new PrismaClient({ adapter } as never);
   }
 
