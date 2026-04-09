@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Product {
+  id           String       @id @default(cuid())
+  code         String       @unique
+  name         String
+  unit         String
+  category     String?
+  location     String?
+  systemQty    Float        @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  countEntries CountEntry[]
+  auditLogs    AuditLog[]
+}
+
+model CountSession {
+  id          String          @id @default(cuid())
+  name        String
+  status      String          @default("PREPARING")
+  countedBy   String?
+  approvedBy  String?
+  notes       String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  documents   CountDocument[]
+  entries     CountEntry[]
+  auditLogs   AuditLog[]
+}
+
+model CountDocument {
+  id         String       @id @default(cuid())
+  sessionId  String
+  session    CountSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  docNumber  String
+  location   String?
+  assignedTo String?
+  status     String       @default("PENDING")
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+model CountEntry {
+  id          String       @id @default(cuid())
+  sessionId   String
+  session     CountSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product      @relation(fields: [productId], references: [id])
+  systemQty   Float
+  countQty    Float?
+  recheckQty  Float?
+  variance    Float?
+  status      String       @default("PENDING")
+  notes       String?
+  countedBy   String?
+  countedAt   DateTime?
+  recheckedBy String?
+  recheckedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model AuditLog {
+  id        String        @id @default(cuid())
+  sessionId String?
+  session   CountSession? @relation(fields: [sessionId], references: [id])
+  productId String?
+  product   Product?      @relation(fields: [productId], references: [id])
+  action    String
+  actor     String        @default("System")
+  before    String?
+  after     String?
+  notes     String?
+  createdAt DateTime      @default(now())
+}
